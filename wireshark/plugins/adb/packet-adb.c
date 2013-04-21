@@ -10,6 +10,7 @@
 #endif
 
 #include <epan/packet.h>
+#include <epan/dissectors/packet-tcp.h>
 #include "packet-adb.h"
 
 static int proto_adb = -1;
@@ -31,6 +32,11 @@ static const value_string map_adb_commands[] = {
 };
 
 static void dissect_adb(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
+    tcp_dissect_pdus(tvb, pinfo, tree, TRUE, FRAME_HEADER_LEN,
+                     get_adb_message_len, dissect_adb_message);
+}
+
+static void dissect_adb_message(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
     guint32 command_identifier = tvb_get_letohl(tvb, 0);
 
     const gchar *str = match_strval(command_identifier, map_adb_commands);
@@ -52,6 +58,10 @@ static void dissect_adb(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree) {
 	}
 }
 
+static guint get_adb_message_len(packet_info *pinfo, tvbuff_t *tvb, int offset) {
+    return (guint)tvb_get_letohl(tvb, offset + 12) + FRAME_HEADER_LEN;
+}
+
 void proto_register_adb(void) {
 	static hf_register_info hf[] = {
 		{ &hf_adb_pdu_command,
@@ -65,7 +75,6 @@ void proto_register_adb(void) {
 		{ &hf_adb_pdu_arg0,
 			{ "arg0", "adb.arg0",
 				FT_UINT32, BASE_DEC,
-				NULL, 0x0,
 				NULL, 0x0,
 				NULL, HFILL
 			}
