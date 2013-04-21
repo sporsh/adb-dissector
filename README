@@ -1,0 +1,6 @@
+This is a basic Wireshark dissector for the Android Debug Bridge (ADB) protocol
+
+To compile this as a Wireshark plugin:
+* Copy the files to your corresponding wireshark source directory
+* run 'autogen.sh'
+* run 'make -C plugins'
